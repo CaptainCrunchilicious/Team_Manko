@@ -31,12 +31,6 @@ A comprehensive React-based agricultural platform with 5 core modules designed t
    - Expert consultations
    - Community guidelines and moderation
 
-5. **Gamified Rewards** (`/rewards`)
-   - Points and badges for sustainable practices
-   - Achievement system with different rarities
-   - Leaderboards and progress tracking
-   - Rewards store with farming equipment and consultations
-
 ## 🚀 Getting Started
 
 ### Prerequisites
