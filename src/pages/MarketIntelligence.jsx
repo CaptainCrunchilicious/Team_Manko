@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, MapPin, Calendar, ShoppingCart } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, MapPin, Calendar, ShoppingCart, IndianRupee } from 'lucide-react'
 
 const MarketIntelligence = () => {
   const [selectedCrop, setSelectedCrop] = useState('tomatoes')
@@ -58,7 +58,7 @@ const MarketIntelligence = () => {
       seller: 'Green Valley Farms',
       crop: 'Organic Tomatoes',
       quantity: '500 lbs',
-      price: '$2.80/lb',
+      price: '₹2.80/lb',
       location: 'Iowa',
       rating: 4.8,
       distance: '25 miles'
@@ -68,7 +68,7 @@ const MarketIntelligence = () => {
       seller: 'Sunrise Agriculture',
       crop: 'Fresh Corn',
       quantity: '2 tons',
-      price: '$6.50/bushel',
+      price: '₹6.50/bushel',
       location: 'Illinois',
       rating: 4.6,
       distance: '45 miles'
@@ -78,7 +78,7 @@ const MarketIntelligence = () => {
       seller: 'Heritage Grains Co.',
       crop: 'Winter Wheat',
       quantity: '10 tons',
-      price: '$8.00/bushel',
+      price: '₹8.00/bushel',
       location: 'Nebraska',
       rating: 4.9,
       distance: '120 miles'
@@ -140,8 +140,8 @@ const MarketIntelligence = () => {
               </div>
             </div>
             <div className="price-value">
-              <DollarSign size={24} />
-              {currentData.currentPrice}
+              <IndianRupee size={24} />
+              {currentData.currentPrice*80}
               <span className="price-unit">/lb</span>
             </div>
             <div className="price-change">

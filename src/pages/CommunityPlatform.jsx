@@ -1,61 +1,70 @@
-import { useState } from 'react'
-import { Users, MessageCircle, ThumbsUp, Share2, Plus, Search, Filter } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Users, MessageCircle, ThumbsUp, Share2, Plus, Search, Filter, X } from 'lucide-react'
 
 const CommunityPlatform = () => {
   const [activeTab, setActiveTab] = useState('discussions')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All Categories')
+  const [replyInputs, setReplyInputs] = useState({})
+  const [showNewPostForm, setShowNewPostForm] = useState(false)
+  const [newPost, setNewPost] = useState({
+    title: "",
+    preview: "",
+    category: "General"
+  })
 
-  const discussions = [
+  const defaultDiscussions = [
     {
       id: 1,
       title: 'Best practices for organic pest control?',
-      author: 'Sarah Johnson',
+      author: 'Rama Sharma',
       avatar: '👩‍🌾',
       category: 'Pest Control',
-      replies: 23,
       likes: 45,
       timeAgo: '2 hours ago',
-      preview: 'I\'ve been struggling with aphids on my tomato plants. Looking for organic solutions that won\'t harm beneficial insects...'
+      preview: 'I\'ve been struggling with aphids on my tomato plants...',
+      replies: [
+        { id: 1, author: "Anita", text: "Try neem oil, works wonders!" },
+        { id: 2, author: "Vikram", text: "Ladybugs are natural predators of aphids." }
+      ]
     },
     {
       id: 2,
       title: 'Soil pH testing - when and how often?',
-      author: 'Mike Chen',
+      author: 'Arjun Kesari',
       avatar: '👨‍🌾',
       category: 'Soil Health',
-      replies: 18,
       likes: 32,
       timeAgo: '5 hours ago',
-      preview: 'New to farming and wondering about soil testing frequency. Should I test every season or just once a year?'
+      preview: 'New to farming and wondering about soil testing frequency...',
+      replies: []
     },
     {
       id: 3,
       title: 'Drought-resistant crops for climate change',
-      author: 'Emma Rodriguez',
+      author: 'Manish Verma',
       avatar: '👩‍🌾',
       category: 'Climate Adaptation',
-      replies: 41,
       likes: 78,
       timeAgo: '1 day ago',
-      preview: 'With changing weather patterns, I\'m looking to diversify with more drought-resistant varieties. What has worked for you?'
-    },
-    {
-      id: 4,
-      title: 'Equipment sharing program in Iowa',
-      author: 'Tom Wilson',
-      avatar: '👨‍🌾',
-      category: 'Equipment',
-      replies: 12,
-      likes: 28,
-      timeAgo: '2 days ago',
-      preview: 'Starting a local equipment sharing cooperative. Who\'s interested in joining? We can split costs on expensive machinery...'
+      preview: 'With changing weather patterns, I\'m looking to diversify...',
+      replies: []
     }
   ]
+
+  const [discussions, setDiscussions] = useState(() => {
+    const saved = localStorage.getItem('discussions')
+    return saved ? JSON.parse(saved) : defaultDiscussions
+  })
+
+  useEffect(() => {
+    localStorage.setItem('discussions', JSON.stringify(discussions))
+  }, [discussions])
 
   const experts = [
     {
       id: 1,
-      name: 'Dr. Lisa Martinez',
+      name: 'Dr. Lisa Dehari',
       title: 'Soil Scientist',
       avatar: '👩‍🔬',
       expertise: ['Soil Health', 'Nutrient Management'],
@@ -64,7 +73,7 @@ const CommunityPlatform = () => {
     },
     {
       id: 2,
-      name: 'John Peterson',
+      name: 'Mayank Godse',
       title: 'Organic Farming Specialist',
       avatar: '👨‍🌾',
       expertise: ['Organic Methods', 'Pest Control'],
@@ -73,7 +82,7 @@ const CommunityPlatform = () => {
     },
     {
       id: 3,
-      name: 'Maria Santos',
+      name: 'Anish Ramakant',
       title: 'Climate Adaptation Expert',
       avatar: '👩‍🌾',
       expertise: ['Climate Change', 'Water Management'],
@@ -90,29 +99,123 @@ const CommunityPlatform = () => {
     'Equipment',
     'Crop Management',
     'Marketing',
-    'Sustainability'
+    'Sustainability',
+    'General'
   ]
 
-  const filteredDiscussions = discussions.filter(discussion =>
-    discussion.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    discussion.preview.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // 🔹 Filter discussions
+  const filteredDiscussions = discussions.filter(discussion => {
+    const matchesSearch =
+      discussion.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      discussion.preview.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesCategory =
+      selectedCategory === 'All Categories' || discussion.category === selectedCategory
+
+    return matchesSearch && matchesCategory
+  })
+
+  // 🔹 Submit new post
+  const handleSubmitNewPost = (e) => {
+    e.preventDefault()
+    if (newPost.title && newPost.preview) {
+      const post = {
+        id: discussions.length + 1,
+        title: newPost.title,
+        author: "You",
+        avatar: "👨‍💻",
+        category: newPost.category,
+        likes: 0,
+        timeAgo: "just now",
+        preview: newPost.preview,
+        replies: []
+      }
+      setDiscussions([post, ...discussions])
+      setShowNewPostForm(false)
+      setNewPost({ title: "", preview: "", category: "General" })
+      setSelectedCategory("All Categories")
+    }
+  }
+
+  const handleAskExpert = (expertName) => {
+    const question = prompt(`Ask ${expertName} your question:`)
+    if (question) {
+      alert(`✅ Your question has been sent to ${expertName}: "${question}"`)
+    }
+  }
+
+  const handleReply = (discussionId) => {
+    const text = replyInputs[discussionId]
+    if (text && text.trim() !== "") {
+      const updated = discussions.map(d => {
+        if (d.id === discussionId) {
+          return {
+            ...d,
+            replies: [...d.replies, { id: d.replies.length + 1, author: "You", text }]
+          }
+        }
+        return d
+      })
+      setDiscussions(updated)
+      setReplyInputs({ ...replyInputs, [discussionId]: "" })
+    }
+  }
 
   return (
     <div className="community-page">
       <div className="community-container">
+        {/* HEADER */}
         <div className="community-header">
           <Users className="header-icon" />
           <div>
             <h1>Community Platform</h1>
             <p>Connect with farmers, share knowledge, and learn together</p>
           </div>
-          <button className="new-post-btn">
+          <button className="new-post-btn" onClick={() => setShowNewPostForm(true)}>
             <Plus size={20} />
             New Post
           </button>
         </div>
 
+        {/* 🔹 New Post Modal */}
+        {showNewPostForm && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h2>Create New Post</h2>
+                <button className="close-btn" onClick={() => setShowNewPostForm(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleSubmitNewPost} className="new-post-form">
+                <input
+                  type="text"
+                  placeholder="Post title"
+                  value={newPost.title}
+                  onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                  required
+                />
+                <textarea
+                  placeholder="Write your content..."
+                  value={newPost.preview}
+                  onChange={(e) => setNewPost({ ...newPost, preview: e.target.value })}
+                  required
+                />
+                <select
+                  value={newPost.category}
+                  onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                >
+                  {categories.filter(cat => cat !== "All Categories").map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <button type="submit" className="submit-post-btn">Publish</button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* TABS */}
         <div className="community-tabs">
           <button 
             className={`tab ${activeTab === 'discussions' ? 'active' : ''}`}
@@ -130,6 +233,7 @@ const CommunityPlatform = () => {
           </button>
         </div>
 
+        {/* DISCUSSIONS */}
         {activeTab === 'discussions' && (
           <div className="discussions-section">
             <div className="search-filters">
@@ -144,7 +248,7 @@ const CommunityPlatform = () => {
               </div>
               <div className="category-filter">
                 <Filter size={18} />
-                <select>
+                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
                   {categories.map(category => (
                     <option key={category} value={category}>
                       {category}
@@ -173,7 +277,7 @@ const CommunityPlatform = () => {
                   <div className="discussion-stats">
                     <div className="stat">
                       <MessageCircle size={16} />
-                      {discussion.replies} replies
+                      {discussion.replies.length} replies
                     </div>
                     <div className="stat">
                       <ThumbsUp size={16} />
@@ -184,12 +288,32 @@ const CommunityPlatform = () => {
                       Share
                     </button>
                   </div>
+
+                  <div className="replies-section">
+                    {discussion.replies.map(r => (
+                      <div key={r.id} className="reply">
+                        <strong>{r.author}:</strong> {r.text}
+                      </div>
+                    ))}
+                    <div className="reply-input">
+                      <input
+                        type="text"
+                        placeholder="Write a reply..."
+                        value={replyInputs[discussion.id] || ""}
+                        onChange={(e) =>
+                          setReplyInputs({ ...replyInputs, [discussion.id]: e.target.value })
+                        }
+                      />
+                      <button onClick={() => handleReply(discussion.id)}>Reply</button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
+        {/* EXPERTS */}
         {activeTab === 'experts' && (
           <div className="experts-section">
             <div className="experts-intro">
@@ -226,7 +350,7 @@ const CommunityPlatform = () => {
                     </div>
                   </div>
 
-                  <button className="ask-expert-btn">
+                  <button className="ask-expert-btn" onClick={() => handleAskExpert(expert.name)}>
                     Ask Question
                   </button>
                 </div>
@@ -235,6 +359,7 @@ const CommunityPlatform = () => {
           </div>
         )}
 
+        {/* COMMUNITY STATS */}
         <div className="community-stats">
           <div className="stats-grid">
             <div className="stat-card">
@@ -252,28 +377,6 @@ const CommunityPlatform = () => {
             <div className="stat-card">
               <h3>89%</h3>
               <p>Problem Resolution Rate</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="community-guidelines">
-          <h2>Community Guidelines</h2>
-          <div className="guidelines-grid">
-            <div className="guideline">
-              <h4>Be Respectful</h4>
-              <p>Treat all community members with respect and kindness</p>
-            </div>
-            <div className="guideline">
-              <h4>Share Knowledge</h4>
-              <p>Help others by sharing your farming experiences and insights</p>
-            </div>
-            <div className="guideline">
-              <h4>Stay On Topic</h4>
-              <p>Keep discussions focused on agriculture and farming topics</p>
-            </div>
-            <div className="guideline">
-              <h4>Verify Information</h4>
-              <p>Double-check facts before sharing advice that could impact crops</p>
             </div>
           </div>
         </div>
