@@ -3,12 +3,18 @@ import { Camera, Upload, Scan, AlertTriangle, CheckCircle, Leaf } from 'lucide-r
 
 const SmartCropScanner = () => {
   const [selectedImage, setSelectedImage] = useState(null)
+  const [selectedFile, setSelectedFile] = useState(null)
   const [scanResult, setScanResult] = useState(null)
   const [isScanning, setIsScanning] = useState(false)
+  const [error, setError] = useState(null)
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
+      // Store both the file for API upload and preview URL for display
+      setSelectedFile(file)
+      setError(null)
+      
       const reader = new FileReader()
       reader.onload = (e) => {
         setSelectedImage(e.target.result)
@@ -19,46 +25,56 @@ const SmartCropScanner = () => {
   }
 
   const handleScan = async () => {
-    if (!selectedImage) return
+    if (!selectedFile) return
 
     setIsScanning(true)
+    setError(null)
     
-    // Simulate Plant.id API call
-    setTimeout(() => {
-      const mockResults = [
-        {
-          disease: 'Tomato Late Blight',
-          confidence: 92,
-          severity: 'High',
-          description: 'A serious fungal disease that affects tomato plants, causing dark spots on leaves and stems.',
-          treatment: [
-            'Remove affected leaves immediately',
-            'Apply copper-based fungicide',
-            'Improve air circulation around plants',
-            'Avoid overhead watering'
-          ],
-          prevention: [
-            'Plant resistant varieties',
-            'Ensure proper spacing between plants',
-            'Water at soil level, not on leaves',
-            'Apply preventive fungicide sprays'
-          ]
-        },
-        {
-          disease: 'Healthy Plant',
-          confidence: 85,
-          severity: 'None',
-          description: 'Your plant appears to be healthy with no visible signs of disease.',
-          treatment: ['Continue current care routine'],
-          prevention: ['Maintain regular watering and fertilization schedule']
-        }
-      ]
+    try {
+      // Create FormData to send the image file
+      const formData = new FormData()
+      formData.append('image', selectedFile)
 
-      // Randomly select a result for demo
-      const result = mockResults[Math.floor(Math.random() * mockResults.length)]
-      setScanResult(result)
+      // Call your existing /api/scan endpoint
+      const response = await fetch('/api/scan', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      // Transform the API response to match your component's expected format
+      const analysis = data.analysis
+      
+      const transformedResult = {
+        disease: analysis.status === 'Healthy' ? 'Healthy Plant' : (analysis.disease || 'Unknown Disease'),
+        confidence: 85, // You might want to add confidence to your Gemini prompt
+        severity: analysis.severity || (analysis.status === 'Healthy' ? 'None' : 'Medium'),
+        description: analysis.description || analysis.notes || 'Analysis completed',
+        treatment: typeof analysis.treatment === 'string' ? 
+          analysis.treatment.split('\n').filter(t => t.trim()) : 
+          (Array.isArray(analysis.treatment) ? analysis.treatment : ['Follow recommended care practices']),
+        prevention: typeof analysis.prevention === 'string' ? 
+          analysis.prevention.split('\n').filter(p => p.trim()) : 
+          (Array.isArray(analysis.prevention) ? analysis.prevention : ['Maintain good plant hygiene'])
+      }
+
+      setScanResult(transformedResult)
+      
+    } catch (error) {
+      console.error('Scan error:', error)
+      setError(`Failed to scan image: ${error.message}`)
+    } finally {
       setIsScanning(false)
-    }, 2000)
+    }
   }
 
   const getSeverityColor = (severity) => {
@@ -145,6 +161,13 @@ const SmartCropScanner = () => {
                   </>
                 )}
               </button>
+            )}
+
+            {error && (
+              <div className="error-message">
+                <AlertTriangle size={20} />
+                <p>{error}</p>
+              </div>
             )}
           </div>
 
