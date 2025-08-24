@@ -99,7 +99,6 @@ src/
 │   ├── SmartCropScanner.jsx # Disease detection tool
 │   ├── MarketIntelligence.jsx # Price tracking & marketplace
 │   ├── CommunityPlatform.jsx # Discussion forums
-│   └── GamifiedRewards.jsx  # Achievement system
 ├── App.jsx                 # Main app component with routing
 ├── App.css                 # Comprehensive styling
 ├── index.css               # Base styles
