@@ -10,7 +10,6 @@ const Navbar = () => {
     { path: '/crop-scanner', label: 'Crop Scanner', icon: Scan },
     { path: '/market-intelligence', label: 'Market Intel', icon: TrendingUp },
     { path: '/community', label: 'Community', icon: Users },
-    { path: '/rewards', label: 'Rewards', icon: Trophy },
   ]
 
   return (
