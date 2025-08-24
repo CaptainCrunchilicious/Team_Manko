@@ -1,6 +1,22 @@
 import { useState } from 'react'
 import { Send, Bot, User, Loader } from 'lucide-react'
 
+// Component to format markdown-like text
+const FormattedMessage = ({ content }) => {
+  if (!content) return null;
+  
+  // Convert markdown-style formatting to HTML
+  let formattedContent = content
+    // Handle bold text **text** or ***text***
+    .replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // Handle line breaks
+    .replace(/\n/g, '<br />');
+
+  return <div dangerouslySetInnerHTML={{ __html: formattedContent }} />;
+};
+
 const AIFarmingChatbot = () => {
   const [messages, setMessages] = useState([
     {
@@ -32,34 +48,44 @@ const AIFarmingChatbot = () => {
     setInputMessage('')
     setIsLoading(true)
 
-    // Simulate AI response (replace with actual OpenAI API call)
-    setTimeout(() => {
+    try {
+      // Fixed: Use the correct server URL (port 3001, not 5173)
+      const response = await fetch('http://localhost:3001/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage,
+          context: 'farming_advisor',
+          conversationHistory: messages.slice(-6) // Send last 6 messages for context
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
       const botResponse = {
         id: Date.now() + 1,
         type: 'bot',
-        content: generateResponse(inputMessage)
+        content: data.response || 'Sorry, I encountered an error. Please try again.'
       }
+      
       setMessages(prev => [...prev, botResponse])
-      setIsLoading(false)
-    }, 1500)
-  }
-
-  const generateResponse = (question) => {
-    // Mock responses - replace with actual OpenAI integration
-    const responses = {
-      'tomato': 'For tomatoes, the best planting time is 2-3 weeks after the last frost date in your area. Soil temperature should be at least 60°F (16°C). Start seeds indoors 6-8 weeks before transplanting outdoors.',
-      'aphid': 'To control aphids: 1) Use insecticidal soap spray, 2) Introduce beneficial insects like ladybugs, 3) Plant companion plants like marigolds, 4) Use neem oil as organic treatment.',
-      'nitrogen': 'Signs of nitrogen deficiency include: yellowing of older leaves first, stunted growth, pale green coloration, and reduced fruit/flower production. Apply nitrogen-rich fertilizer or compost.',
-      'water': 'Most vegetables need 1-1.5 inches of water per week. Water deeply but less frequently to encourage deep root growth. Check soil moisture 2 inches deep before watering.'
-    }
-
-    for (const [key, response] of Object.entries(responses)) {
-      if (question.toLowerCase().includes(key)) {
-        return response
+    } catch (error) {
+      console.error('Error:', error)
+      const errorResponse = {
+        id: Date.now() + 1,
+        type: 'bot',
+        content: 'Sorry, I\'m having trouble connecting to the server. Make sure the server is running on port 3001.'
       }
+      setMessages(prev => [...prev, errorResponse])
+    } finally {
+      setIsLoading(false)
     }
-
-    return 'That\'s a great question! Based on agricultural best practices, I recommend consulting with local extension services for region-specific advice. In general, consider factors like your local climate, soil conditions, and crop variety when making farming decisions.'
   }
 
   const handleSampleQuestion = (question) => {
@@ -84,7 +110,7 @@ const AIFarmingChatbot = () => {
                 {message.type === 'bot' ? <Bot size={20} /> : <User size={20} />}
               </div>
               <div className="message-content">
-                {message.content}
+                <FormattedMessage content={message.content} />
               </div>
             </div>
           ))}
