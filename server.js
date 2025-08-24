@@ -6,9 +6,7 @@ import { dirname, join } from 'path'
 import multer from 'multer'
 import fs from 'fs'
 
-// ----------------------
-// 🔹 ENVIRONMENT LOADING
-// ----------------------
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
@@ -27,9 +25,6 @@ const PORT = process.env.PORT || 3001
 app.use(cors())
 app.use(express.json())
 
-// ----------------------
-// 🔹 Farming Chatbot API
-// ----------------------
 app.post('/api/chat', async (req, res) => {
   const { message, context, conversationHistory = [] } = req.body
 
@@ -131,9 +126,6 @@ Provide practical, actionable advice tailored to the user's specific questions. 
   }
 })
 
-// ----------------------
-// 🔹 Plant Health Scanner
-// ----------------------
 const upload = multer({ dest: 'uploads/' })
 
 app.post('/api/scan', upload.single('image'), async (req, res) => {
@@ -213,12 +205,10 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
 
     let analysis
     try {
-      // Try to extract JSON from the response (in case there's extra text)
       const jsonMatch = rawText.match(/\{[\s\S]*\}/)
       const jsonString = jsonMatch ? jsonMatch[0] : rawText
       analysis = JSON.parse(jsonString)
       
-      // Ensure required fields exist
       if (!analysis.status) analysis.status = 'Unknown'
       if (!analysis.disease) analysis.disease = 'Analysis incomplete'
       if (!analysis.severity) analysis.severity = 'Medium'
@@ -229,7 +219,6 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
       
     } catch (parseError) {
       console.error('JSON parse error:', parseError)
-      // Fallback analysis if JSON parsing fails
       analysis = {
         status: 'Unknown',
         disease: 'Analysis Error',
@@ -245,7 +234,6 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
   } catch (error) {
     console.error('Server error during scan:', error)
     
-    // Clean up file if it still exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path)
     }
@@ -265,9 +253,6 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
   }
 })
 
-// ----------------------
-// 🔹 Health Check
-// ----------------------
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',

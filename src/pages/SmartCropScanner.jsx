@@ -11,7 +11,6 @@ const SmartCropScanner = () => {
   const handleImageUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
-      // Store both the file for API upload and preview URL for display
       setSelectedFile(file)
       setError(null)
       
